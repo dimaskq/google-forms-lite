@@ -1,0 +1,14 @@
+{
+  "name": "google-forms-lite",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.17.1",
+  "scripts": {
+    "dev": "concurrently -n server,client -c cyan,magenta \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
+    "dev:server": "pnpm --filter server dev",
+    "dev:client": "pnpm --filter client dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
