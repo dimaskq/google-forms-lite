@@ -13,7 +13,8 @@ function FillFormPage() {
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading)
+    return <p className="text-center mt-10 text-gray-500">Loading...</p>;
 
   const handleChange = (questionId: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -51,64 +52,96 @@ function FillFormPage() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>{data?.form?.title}</h1>
-      <p>{data?.form?.description}</p>
+    <div className="min-h-screen bg-gray-50 flex justify-center py-10">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8">
+        <h1 className="text-3xl font-semibold text-gray-800 mb-2">
+          {data?.form?.title}
+        </h1>
+        <p className="text-gray-600 mb-6">{data?.form?.description}</p>
 
-      <form onSubmit={handleSubmit}>
-        {data?.form?.questions?.map((q: any) => (
-          <div key={q.id} style={{ margin: "15px 0" }}>
-            <label>
-              <strong>{q.text}</strong>
-            </label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {data?.form?.questions?.map((q: any) => (
+            <div
+              key={q.id}
+              className="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
+            >
+              <label className="block text-lg font-medium text-gray-800 mb-3">
+                {q.text}
+              </label>
 
-            {q.type === "TEXT" && (
-              <input
-                type="text"
-                value={answers[q.id] || ""}
-                onChange={(e) => handleChange(q.id, e.target.value)}
-              />
-            )}
+              {q.type === "TEXT" && (
+                <input
+                  type="text"
+                  value={answers[q.id] || ""}
+                  onChange={(e) => handleChange(q.id, e.target.value)}
+                  className="w-full border-b border-gray-300 focus:border-purple-600 outline-none py-2 text-gray-700"
+                />
+              )}
 
-            {q.type === "DATE" && (
-              <input
-                type="date"
-                value={answers[q.id] || ""}
-                onChange={(e) => handleChange(q.id, e.target.value)}
-              />
-            )}
+              {q.type === "DATE" && (
+                <input
+                  type="date"
+                  value={answers[q.id] || ""}
+                  onChange={(e) => handleChange(q.id, e.target.value)}
+                  className="border rounded-md px-3 py-2 text-gray-700 focus:ring-2 focus:ring-purple-500 outline-none"
+                />
+              )}
 
-            {q.type === "RADIO" &&
-              q.options?.map((opt: string, idx: number) => (
-                <div key={idx}>
-                  <input
-                    type="radio"
-                    name={q.id}
-                    value={opt}
-                    checked={answers[q.id] === opt}
-                    onChange={(e) => handleChange(q.id, e.target.value)}
-                  />
-                  {opt}
+              {q.type === "RADIO" && (
+                <div className="space-y-2">
+                  {q.options?.map((opt: string, idx: number) => (
+                    <label
+                      key={idx}
+                      className="flex items-center gap-2 text-gray-700"
+                    >
+                      <input
+                        type="radio"
+                        name={q.id}
+                        value={opt}
+                        checked={answers[q.id] === opt}
+                        onChange={(e) => handleChange(q.id, e.target.value)}
+                        className="text-purple-600 focus:ring-purple-500"
+                      />
+                      {opt}
+                    </label>
+                  ))}
                 </div>
-              ))}
+              )}
 
-            {q.type === "CHECKBOX" &&
-              q.options?.map((opt: string, idx: number) => (
-                <div key={idx}>
-                  <input
-                    type="checkbox"
-                    value={opt}
-                    checked={answers[q.id]?.split(",").includes(opt) || false}
-                    onChange={() => handleCheckboxChange(q.id, opt)}
-                  />
-                  {opt}
+              {q.type === "CHECKBOX" && (
+                <div className="space-y-2">
+                  {q.options?.map((opt: string, idx: number) => (
+                    <label
+                      key={idx}
+                      className="flex items-center gap-2 text-gray-700"
+                    >
+                      <input
+                        type="checkbox"
+                        value={opt}
+                        checked={
+                          answers[q.id]?.split(",").includes(opt) || false
+                        }
+                        onChange={() => handleCheckboxChange(q.id, opt)}
+                        className="text-purple-600 focus:ring-purple-500"
+                      />
+                      {opt}
+                    </label>
+                  ))}
                 </div>
-              ))}
+              )}
+            </div>
+          ))}
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="px-6 py-2 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+            >
+              Submit
+            </button>
           </div>
-        ))}
-
-        <button type="submit">Submit</button>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
