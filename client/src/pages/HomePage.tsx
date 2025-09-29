@@ -2,28 +2,43 @@ import { Link } from "react-router-dom";
 import { useGetFormsQuery, useDeleteFormMutation } from "../services/formsApi";
 
 function HomePage() {
-  const { data, isLoading } = useGetFormsQuery();
-  const [deleteForm] = useDeleteFormMutation();
+  const { data, isLoading, isError, error } = useGetFormsQuery();
+  const [deleteForm, { isError: isDeleteError, error: deleteError }] =
+    useDeleteFormMutation();
 
-  if (isLoading)
+  if (isLoading) {
     return <p className="text-center mt-10 text-gray-500">Loading...</p>;
+  }
+
+  if (isError) {
+    return (
+      <p className="text-center mt-10 text-red-500">
+        Failed to load forms: {JSON.stringify(error)}
+      </p>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-4xl mx-auto px-6">
-        {/* Заголовок */}
         <h1 className="text-3xl font-semibold text-gray-900 mb-8 text-center">
           Forms
         </h1>
 
-        {/* Порожній список */}
+        {/* Delete error message */}
+        {isDeleteError && (
+          <p className="text-center text-red-500 mb-4">
+            Failed to delete form: {JSON.stringify(deleteError)}
+          </p>
+        )}
+
         {data?.forms?.length === 0 && (
           <p className="text-gray-600 text-center">
             No forms yet. Create one to get started.
           </p>
         )}
 
-        {/* Список форм */}
+        {/* form list */}
         <div className="grid gap-4">
           {data?.forms?.map((form: any) => (
             <div
@@ -65,7 +80,7 @@ function HomePage() {
           ))}
         </div>
 
-        {/* Кнопка створення */}
+        {/* create btn */}
         <div className="mt-8 flex justify-center">
           <Link
             to="/forms/new"

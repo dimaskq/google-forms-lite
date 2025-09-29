@@ -3,13 +3,37 @@ import { useGetFormQuery, useGetResponsesQuery } from "../services/formsApi";
 
 function ResponsesPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: formData } = useGetFormQuery({ id: id! });
-  const { data: respData, isLoading } = useGetResponsesQuery({ formId: id! });
+  const {
+    data: formData,
+    isLoading: isFormLoading,
+    isError: isFormError,
+    error: formError,
+  } = useGetFormQuery({ id: id! });
+  const {
+    data: respData,
+    isLoading: isRespLoading,
+    isError: isRespError,
+    error: respError,
+  } = useGetResponsesQuery({ formId: id! });
 
-  if (isLoading)
+  if (isFormLoading || isRespLoading)
     return <p className="text-center mt-10 text-gray-500">Loading...</p>;
 
-  // make a map question id -> text
+  if (isFormError)
+    return (
+      <p className="text-center mt-10 text-red-500">
+        Failed to load form: {JSON.stringify(formError)}
+      </p>
+    );
+
+  if (isRespError)
+    return (
+      <p className="text-center mt-10 text-red-500">
+        Failed to load responses: {JSON.stringify(respError)}
+      </p>
+    );
+
+  // map question id -> text
   const questionMap: Record<string, string> = {};
   formData?.form?.questions?.forEach((q: any) => {
     questionMap[q.id] = q.text;
@@ -30,20 +54,23 @@ function ResponsesPage() {
         )}
 
         <div className="space-y-6">
-          {respData?.responses?.map((r: any) => (
+          {respData?.responses?.map((r: any, idx: number) => (
             <div
               key={r.id}
               className="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
             >
               <p className="mb-3 text-gray-700">
-                <span className="font-medium">Response #{r.id}</span> — Score:{" "}
+                <span className="font-medium">Response #{idx + 1}</span> —
+                Score:{" "}
                 <span className="font-medium text-purple-600">
                   {r.score ?? 0}
                 </span>
+                {" / "}
+                <span className="text-gray-600">{r.maxScore ?? 0}</span>
               </p>
               <ul className="space-y-2 text-gray-700">
-                {r.answers.map((a: any, idx: number) => (
-                  <li key={idx} className="border-b border-gray-100 pb-1">
+                {r.answers.map((a: any, ansIdx: number) => (
+                  <li key={ansIdx} className="border-b border-gray-100 pb-1">
                     <span className="font-medium">
                       {questionMap[a.questionId] || a.questionId}:
                     </span>{" "}

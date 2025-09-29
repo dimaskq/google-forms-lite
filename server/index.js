@@ -5,28 +5,37 @@ const { buildSchema } = require("graphql");
 
 // --- GraphQL schema ---
 const schema = buildSchema(`
+  type Form {
+    id: ID!
+    title: String!
+    description: String
+    showScore: Boolean
+    questions: [Question!]!
+  }
+
   type Question {
     id: ID!
-    type: String!
     text: String!
-    options: [String!]
+    type: String!
+    options: [String]
     correctAnswer: String
     points: Int
   }
 
   input QuestionInput {
-    type: String!
     text: String!
-    options: [String!]
+    type: String!
+    options: [String]
     correctAnswer: String
     points: Int
   }
 
-  type Form {
+  type Response {
     id: ID!
-    title: String!
-    description: String
-    questions: [Question!]!
+    formId: ID!
+    answers: [Answer!]!
+    score: Int
+    maxScore: Int   
   }
 
   type Answer {
@@ -39,13 +48,6 @@ const schema = buildSchema(`
     value: String!
   }
 
-type Response {
-  id: ID!
-  formId: ID!
-  answers: [Answer!]!
-  score: Int
-}
-
   type Query {
     forms: [Form!]!
     form(id: ID!): Form
@@ -53,22 +55,10 @@ type Response {
   }
 
   type Mutation {
-    createForm(
-      title: String!
-      description: String
-      questions: [QuestionInput!]!
-    ): Form
-    submitResponse(
-      formId: ID!
-      answers: [AnswerInput!]!
-    ): Response
+    createForm(title: String!, description: String, questions: [QuestionInput!]!, showScore: Boolean): Form!
+    updateForm(id: ID!, title: String, description: String, questions: [QuestionInput!], showScore: Boolean): Form
     deleteForm(id: ID!): Boolean
-    updateForm(
-      id: ID!
-      title: String
-      description: String
-      questions: [QuestionInput!]
-    ): Form
+    submitResponse(formId: ID!, answers: [AnswerInput!]!): Response!
   }
 `);
 
@@ -87,11 +77,12 @@ const root = {
 
   responses: ({ formId }) => responses.filter((r) => r.formId === formId),
 
-  createForm: ({ title, description, questions }) => {
+  createForm: ({ title, description, questions, showScore }) => {
     const form = {
       id: String(formCounter++),
       title,
       description,
+      showScore: showScore ?? true,
       questions: questions.map((q) => ({
         id: String(questionCounter++),
         ...q,
@@ -106,33 +97,37 @@ const root = {
     if (!form) throw new Error("Form not found");
 
     let score = 0;
+    let maxScore = 0;
 
     form.questions.forEach((q) => {
+      const points = q.points || 0;
+      maxScore += points;
+
       const userAnswer = answers.find((a) => a.questionId === q.id);
       if (!userAnswer) return;
 
       if (q.correctAnswer) {
         if (q.type === "CHECKBOX") {
-          // the correct answer may be several commas apart
           const correct = q.correctAnswer.split(",").map((s) => s.trim());
           const given = userAnswer.value.split(",").map((s) => s.trim());
           const isCorrect =
             correct.length === given.length &&
-            correct.every((c) => given.includes(c));
-          if (isCorrect) score += q.points || 0;
+            correct.every((v) => given.includes(v));
+          if (isCorrect) score += points;
         } else {
           if (userAnswer.value.trim() === q.correctAnswer.trim()) {
-            score += q.points || 0;
+            score += points;
           }
         }
       }
     });
 
     const response = {
-      id: String(responseCounter++),
+      id: String(responses.length + 1),
       formId,
       answers,
       score,
+      maxScore,
     };
     responses.push(response);
     return response;
@@ -145,12 +140,13 @@ const root = {
     return true;
   },
 
-  updateForm: ({ id, title, description, questions }) => {
+  updateForm: ({ id, title, description, questions, showScore }) => {
     const form = forms.find((f) => f.id === id);
     if (!form) return null;
 
     if (title !== undefined) form.title = title;
     if (description !== undefined) form.description = description;
+    if (showScore !== undefined) form.showScore = showScore;
     if (questions !== undefined) {
       form.questions = questions.map((q) => ({
         id: String(questionCounter++),

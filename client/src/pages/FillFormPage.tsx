@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   useGetFormQuery,
@@ -12,6 +12,12 @@ function FillFormPage() {
   const navigate = useNavigate();
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [result, setResult] = useState<{
+    score: number;
+    maxScore: number;
+  } | null>(null);
+  const [unanswered, setUnanswered] = useState<string[]>([]);
+  const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   if (isLoading)
     return <p className="text-center mt-10 text-gray-500">Loading...</p>;
@@ -40,16 +46,65 @@ function FillFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    await submitResponse({
-      formId: id!,
-      answers: Object.entries(answers).map(([questionId, value]) => ({
-        questionId,
-        value,
-      })),
-    });
+    const missing =
+      data?.form?.questions
+        ?.filter((q: any) => !answers[q.id] || answers[q.id].trim() === "")
+        .map((q: any) => q.id) || [];
 
-    navigate("/");
+    if (missing.length > 0) {
+      setUnanswered(missing);
+
+      // scroll
+      const firstId = missing[0];
+      const el = questionRefs.current[firstId];
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
+    try {
+      const res = await submitResponse({
+        formId: id!,
+        answers: Object.entries(answers).map(([questionId, value]) => ({
+          questionId,
+          value,
+        })),
+      }).unwrap();
+
+      if (data?.form?.showScore) {
+        setResult({ score: res.score, maxScore: res.maxScore });
+      } else {
+        navigate("/");
+      }
+    } catch (err) {
+      console.error("Failed to submit response:", err);
+    }
   };
+
+  if (result) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex justify-center py-10">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+            Test Completed 🎉
+          </h2>
+          <p className="text-lg text-gray-700 mb-6">
+            Your score:{" "}
+            <span className="font-bold text-purple-600 text-xl">
+              {result.score} / {result.maxScore}
+            </span>
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="px-6 py-2 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center py-10">
@@ -63,7 +118,12 @@ function FillFormPage() {
           {data?.form?.questions?.map((q: any) => (
             <div
               key={q.id}
-              className="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
+              ref={(el) => {
+                questionRefs.current[q.id] = el;
+              }}
+              className={`bg-white border rounded-xl shadow-sm p-5 ${
+                unanswered.includes(q.id) ? "border-red-500" : "border-gray-200"
+              }`}
             >
               <label className="block text-lg font-medium text-gray-800 mb-3">
                 {q.text}

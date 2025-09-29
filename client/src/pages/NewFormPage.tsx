@@ -6,7 +6,8 @@ function NewFormPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [questions, setQuestions] = useState<any[]>([]);
-  const [createForm] = useCreateFormMutation();
+  const [createForm, { isLoading, isError, error }] = useCreateFormMutation();
+  const [showScore, setShowScore] = useState(true);
   const navigate = useNavigate();
 
   const addQuestion = () => {
@@ -30,8 +31,13 @@ function NewFormPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createForm({ title, description, questions }).unwrap();
-    navigate("/");
+    try {
+      await createForm({ title, description, questions, showScore }).unwrap();
+
+      navigate("/");
+    } catch (err) {
+      console.error("Failed to create form:", err);
+    }
   };
 
   return (
@@ -40,7 +46,6 @@ function NewFormPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8 space-y-8"
       >
-        {/* Заголовок */}
         <div className="border-b pb-4">
           <input
             type="text"
@@ -57,7 +62,25 @@ function NewFormPage() {
           />
         </div>
 
-        {/* Питання */}
+        {/* Error */}
+        {isError && (
+          <p className="text-red-500">
+            Failed to save form: {JSON.stringify(error)}
+          </p>
+        )}
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={showScore}
+            onChange={(e) => setShowScore(e.target.checked)}
+            className="h-4 w-4 text-purple-600"
+          />
+          <label className="text-gray-700 text-sm">
+            Show score after submission
+          </label>
+        </div>
+
         <div className="space-y-6">
           {questions.map((q, i) => (
             <div
@@ -136,7 +159,6 @@ function NewFormPage() {
           ))}
         </div>
 
-        {/* Кнопки */}
         <div className="flex gap-4">
           <button
             type="button"
@@ -147,9 +169,10 @@ function NewFormPage() {
           </button>
           <button
             type="submit"
-            className="px-5 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition font-medium"
+            disabled={isLoading}
+            className="px-5 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition font-medium disabled:opacity-50"
           >
-            Save form
+            {isLoading ? "Saving..." : "Save form"}
           </button>
         </div>
       </form>

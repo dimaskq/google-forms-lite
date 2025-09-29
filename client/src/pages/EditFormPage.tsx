@@ -13,8 +13,16 @@ type Question = {
 
 function EditFormPage() {
   const { id } = useParams<{ id: string }>();
-  const { data, isLoading } = useGetFormQuery({ id: id! });
-  const [updateForm] = useUpdateFormMutation();
+  const {
+    data,
+    isLoading,
+    isError: isFormError,
+    error: formError,
+  } = useGetFormQuery({ id: id! });
+  const [
+    updateForm,
+    { isLoading: isSaving, isError: isUpdateError, error: updateError },
+  ] = useUpdateFormMutation();
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
@@ -62,17 +70,28 @@ function EditFormPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateForm({
-      id: id!,
-      title,
-      description,
-      questions: questions.map(({ id, ...q }) => q),
-    });
-    navigate("/");
+    try {
+      await updateForm({
+        id: id!,
+        title,
+        description,
+        questions: questions.map(({ id, ...q }) => q),
+      }).unwrap();
+      navigate("/");
+    } catch (err) {
+      console.error("Failed to update form:", err);
+    }
   };
 
   if (isLoading)
     return <p className="text-center mt-10 text-gray-500">Loading...</p>;
+
+  if (isFormError)
+    return (
+      <p className="text-center mt-10 text-red-500">
+        Failed to load form: {JSON.stringify(formError)}
+      </p>
+    );
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-start justify-center py-10">
@@ -98,7 +117,14 @@ function EditFormPage() {
           />
         </div>
 
-        {/* Список питань */}
+        {/* Error */}
+        {isUpdateError && (
+          <p className="text-red-500">
+            Failed to update form: {JSON.stringify(updateError)}
+          </p>
+        )}
+
+        {/* questions list */}
         <div className="space-y-6">
           {questions.map((q) => (
             <div
@@ -193,9 +219,10 @@ function EditFormPage() {
         <div className="flex justify-end">
           <button
             type="submit"
-            className="px-6 py-2 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+            disabled={isSaving}
+            className="px-6 py-2 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 transition disabled:opacity-50"
           >
-            Save changes
+            {isSaving ? "Saving..." : "Save changes"}
           </button>
         </div>
       </form>
