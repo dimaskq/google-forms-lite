@@ -1,5 +1,10 @@
 import { useParams } from "react-router-dom";
 import { useGetFormQuery, useGetResponsesQuery } from "../services/formsApi";
+import Container from "../components/layout/Container";
+import PageTitle from "../components/layout/PageTitle";
+import Loader from "../components/common/Loader";
+import ErrorMessage from "../components/common/ErrorMessage";
+import ResponseItem from "../components/form/ResponseItem";
 
 function ResponsesPage() {
   const { id } = useParams<{ id: string }>();
@@ -16,21 +21,20 @@ function ResponsesPage() {
     error: respError,
   } = useGetResponsesQuery({ formId: id! });
 
-  if (isFormLoading || isRespLoading)
-    return <p className="text-center mt-10 text-gray-500">Loading...</p>;
+  if (isFormLoading || isRespLoading) return <Loader />;
 
   if (isFormError)
     return (
-      <p className="text-center mt-10 text-red-500">
-        Failed to load form: {JSON.stringify(formError)}
-      </p>
+      <ErrorMessage
+        message={`Failed to load form: ${JSON.stringify(formError)}`}
+      />
     );
 
   if (isRespError)
     return (
-      <p className="text-center mt-10 text-red-500">
-        Failed to load responses: {JSON.stringify(respError)}
-      </p>
+      <ErrorMessage
+        message={`Failed to load responses: ${JSON.stringify(respError)}`}
+      />
     );
 
   // map question id -> text
@@ -40,49 +44,29 @@ function ResponsesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center py-10">
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-3xl font-semibold text-gray-800 mb-2">
-          Responses for {formData?.form?.title}
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Total responses: {respData?.responses?.length || 0}
-        </p>
+    <Container>
+      <PageTitle>Responses for {formData?.form?.title}</PageTitle>
+      <p className="text-gray-600 mb-6">
+        Total responses: {respData?.responses?.length || 0}
+      </p>
 
-        {respData?.responses?.length === 0 && (
-          <p className="text-gray-500">No responses yet.</p>
-        )}
+      {respData?.responses?.length === 0 && (
+        <p className="text-gray-500">No responses yet.</p>
+      )}
 
-        <div className="space-y-6">
-          {respData?.responses?.map((r: any, idx: number) => (
-            <div
-              key={r.id}
-              className="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
-            >
-              <p className="mb-3 text-gray-700">
-                <span className="font-medium">Response #{idx + 1}</span> —
-                Score:{" "}
-                <span className="font-medium text-purple-600">
-                  {r.score ?? 0}
-                </span>
-                {" / "}
-                <span className="text-gray-600">{r.maxScore ?? 0}</span>
-              </p>
-              <ul className="space-y-2 text-gray-700">
-                {r.answers.map((a: any, ansIdx: number) => (
-                  <li key={ansIdx} className="border-b border-gray-100 pb-1">
-                    <span className="font-medium">
-                      {questionMap[a.questionId] || a.questionId}:
-                    </span>{" "}
-                    {a.value}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+      <div className="space-y-6">
+        {respData?.responses?.map((r: any, idx: number) => (
+          <ResponseItem
+            key={r.id}
+            index={idx}
+            answers={r.answers}
+            score={r.score}
+            maxScore={r.maxScore}
+            questionMap={questionMap}
+          />
+        ))}
       </div>
-    </div>
+    </Container>
   );
 }
 
