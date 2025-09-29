@@ -180,7 +180,7 @@ export const formsApi = createApi({
       providesTags: (result, _error, arg) =>
         result
           ? [
-              ...result.responses.map((r: any) => ({
+              ...result.responses.map((_r: any) => ({
                 type: "Response" as const,
                 id: arg.formId,
               })),
