@@ -93,24 +93,7 @@ cd google-forms-lite
 pnpm install
 ```
 
-### 3. Run the backend
-
-```bash
-cd server
-pnpm dev
-```
-
-Server will run at [http://localhost:4000/graphql](http://localhost:4000/graphql)
-
-### 4. Run the frontend
-
-```bash
-cd client
-pnpm dev
-
-```
-
-### 5. Run everything together from the root
+### 3. Run everything together from the root
 
 You can start both frontend and backend simultaneously:
 
