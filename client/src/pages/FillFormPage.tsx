@@ -95,6 +95,7 @@ export default function FillFormPage() {
           onChange={handleChange}
           onCheckboxChange={handleCheckboxChange}
           unanswered={unanswered}
+          questionRefs={questionRefs}
         />
 
         <div className="flex justify-end">

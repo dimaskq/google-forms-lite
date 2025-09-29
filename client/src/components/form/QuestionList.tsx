@@ -13,6 +13,7 @@ type Props = {
   onChange: (questionId: string, value: string) => void;
   onCheckboxChange: (questionId: string, value: string) => void;
   unanswered?: string[];
+  questionRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
 };
 
 export default function QuestionList({
@@ -21,12 +22,16 @@ export default function QuestionList({
   onChange,
   onCheckboxChange,
   unanswered = [],
+  questionRefs,
 }: Props) {
   return (
     <div className="space-y-4">
       {questions.map((q) => (
         <FormQuestion
           key={q.id}
+          ref={(el) => {
+            questionRefs.current[q.id] = el;
+          }}
           question={q}
           value={answers[q.id] || ""}
           onChange={(val) => onChange(q.id, val)}
