@@ -1,53 +1,54 @@
 # Google Forms Lite
 
-A simplified clone of Google Forms.  
-This project is organized as a **monorepo** using `pnpm workspaces`.  
-Both frontend and backend live in the same repository.
-
----
+A simplified Google Forms clone built with a **monorepo** structure using pnpm workspaces.
 
 ## Features
 
-- Form creation:
-  - Title and description
-  - Question types: `TEXT`, `DATE`, `RADIO`, `CHECKBOX`
-  - Ability to set correct answers and points
-  - Option to show score after submission
-- Edit existing forms
-- Delete forms
-- Fill out a form:
-  - Validation (cannot submit until all questions are answered)
-  - Highlight and scroll to the first unanswered question
-  - Score calculation and result display
-- View responses:
-  - List of all responses
-  - Score for each response (`score / maxScore`)
-  - Answers per question
-- Clean UI built with **Tailwind CSS**
-- Structured codebase: pages → components (FormCard, QuestionList, FormQuestion, ResponseItem, ScoreCard, EmptyState)
+- Create, edit, delete forms with title, description, and questions
+- Supported question types: Text, Date, Radio, Checkbox
+- Fill forms with validation for required questions
+- Submit responses and calculate scores (if applicable)
+- View responses per form
+- Clean UI with TailwindCSS
+- Monorepo with shared scripts for client & server
 
 ---
 
 ## Tech Stack
 
-### Frontend
+### Frontend (client)
 
-- **React**
-- **TypeScript**
-- **Redux Toolkit + RTK Query**
-- **React Router**
-- **Tailwind CSS**
-- Components split by responsibility:
-  - `components/common` — base components (Button, Input, etc.)
-  - `components/layout` — Container, PageTitle
-  - `components/form` — form-specific UI
+- React 18
+- TypeScript
+- Redux Toolkit & RTK Query
+- React Router DOM
+- TailwindCSS
+- Vite
 
-### Backend
+### Backend (server)
 
-- **Node.js + Express**
-- **express-graphql**
-- **GraphQL** (schema + resolvers)
-- In-memory storage (forms, questions, and responses stored in arrays)
+- Node.js
+- Express
+- GraphQL with express-graphql
+- In-memory storage (no database required for test task)
+
+### Tooling
+
+- pnpm (workspaces, monorepo management)
+- nodemon (dev backend)
+- concurrently (run client & server together)
+
+---
+
+## Why pnpm?
+
+This project uses **pnpm** instead of npm or yarn mainly because:
+
+- **Best support for monorepos** — built-in workspace management, no extra tools needed.
+- Much faster installs (clever package store, hard links).
+- Saves disk space (no duplicate copies of the same packages).
+
+👉 You _could_ run it with npm/yarn, but all scripts here are tested with pnpm.
 
 ---
 
@@ -55,67 +56,163 @@ Both frontend and backend live in the same repository.
 
 ```
 google-forms-lite/
-├── client/           # frontend (React + TS)
-│   ├── src/
-│   │   ├── pages/    # pages (HomePage, NewFormPage, EditFormPage, FillFormPage, ResponsesPage)
-│   │   ├── components/
-│   │   │   ├── common/
-│   │   │   ├── layout/
-│   │   │   └── form/
-│   │   ├── services/ # RTK Query API
-│   │   └── app/      # Redux store
-│   └── package.json
-│
-├── server/           # backend (Node.js + GraphQL)
-│   ├── index.js
-│   ├── schema.js
-│   ├── resolvers.js
-│   └── data.js
-│
-├── package.json      # root, with workspaces
-└── pnpm-workspace.yaml
+├── package.json           # root config (workspaces)
+├── pnpm-lock.yaml
+├── client/                # frontend (React + Vite + TS)
+│   ├── package.json
+│   └── src/
+│       ├── pages/
+│       ├── components/
+│       ├── services/
+│       ├── app/
+│       └── main.tsx
+└── server/                # backend (Express + GraphQL)
+    ├── package.json
+    └── src/
+        ├── index.js
+        ├── schema.js
+        ├── resolvers.js
+        └── data.js
 ```
+
+---
+
+## Environment variables (`.env`)
+
+### Backend (`server/.env`)
+
+The backend uses [`dotenv`](https://www.npmjs.com/package/dotenv).  
+Create a `.env` file inside `server/`:
+
+```env
+PORT=4000
+```
+
+- `PORT` — the port where Express + GraphQL server will run.
+
+The server reads it in `src/index.js`:
+
+```js
+import dotenv from "dotenv";
+dotenv.config();
+
+const PORT = process.env.PORT || 4000;
+```
+
+### Frontend (`client/.env`)
+
+The frontend is built with **Vite**, so all variables must start with `VITE_`.  
+Create a `.env` file inside `client/`:
+
+```env
+VITE_API_URL=http://localhost:4000/graphql
+```
+
+- `VITE_API_URL` — URL of your backend GraphQL API.
+- In production you will change it, for example:
+  ```env
+  VITE_API_URL=https://backend.up.railway.app/graphql
+  ```
+
+Usage in code (`formsApi.ts`):
+
+```ts
+const baseUrl = import.meta.env.VITE_API_URL;
+```
+
+### `.env.example`
+
+For clarity and to help other developers:
+
+- Create `server/.env.example` and `client/.env.example` with the same keys but without secrets.
+- Add real `.env` files to `.gitignore`.
 
 ---
 
 ## Getting Started
 
-### 1. Clone the repository
+### 1. Install pnpm
+
+If you don’t have pnpm:
 
 ```bash
-git clone https://github.com/dimaskq/google-forms-lite.git
-cd google-forms-lite
+npm install -g pnpm
 ```
 
 ### 2. Install dependencies
+
+At the root of the project:
 
 ```bash
 pnpm install
 ```
 
-### 3. Run the backend
+### 3. Run backend
 
 ```bash
 cd server
 pnpm dev
 ```
 
-Server will run at [http://localhost:4000/graphql](http://localhost:4000/graphql)
+Backend will run at [http://localhost:4000/graphql](http://localhost:4000/graphql).
 
-### 4. Run the frontend
+### 4. Run frontend
 
 ```bash
 cd client
 pnpm dev
-
 ```
 
-### 5. Run everything together from the root
+Frontend will run at [http://localhost:5173](http://localhost:5173).
 
-You can start both frontend and backend simultaneously:
+### 5. Run both (from root)
 
 ```bash
 pnpm dev
 ```
 
-Frontend will run at [http://localhost:5173](http://localhost:5173)
+This uses `concurrently` to start both client and server.
+
+---
+
+## GraphQL Examples
+
+### Query all forms
+
+```graphql
+query {
+  forms {
+    id
+    title
+    description
+  }
+}
+```
+
+### Create a form
+
+```graphql
+mutation {
+  createForm(input: { title: "Sample Form", description: "Hello World" }) {
+    id
+    title
+  }
+}
+```
+
+### Submit a response
+
+```graphql
+mutation {
+  submitResponse(
+    formId: "1"
+    answers: [{ questionId: "1", value: "My Answer" }]
+  ) {
+    id
+    answers {
+      questionId
+      value
+    }
+  }
+}
+```

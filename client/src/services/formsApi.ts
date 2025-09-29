@@ -1,8 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { gql, request } from "graphql-request";
 
-const BASE_URL = "http://localhost:4000/graphql";
-
+const BASE_URL = import.meta.env.VITE_API_URL;
 const graphqlBaseQuery =
   ({ baseUrl }: { baseUrl: string }) =>
   async ({ document, variables }: { document: string; variables?: any }) => {

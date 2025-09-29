@@ -3,6 +3,8 @@ const cors = require("cors");
 const { graphqlHTTP } = require("express-graphql");
 const schema = require("./schema");
 const root = require("./resolvers");
+require("dotenv").config();
+const PORT = process.env.PORT || 4000;
 
 const app = express();
 app.use(cors());
@@ -15,6 +17,6 @@ app.use(
   })
 );
 
-app.listen(4000, () => {
-  console.log("🚀 GraphQL server running at http://localhost:4000/graphql");
+app.listen(PORT, () => {
+  console.log(`🚀 GraphQL server running at http://localhost:${PORT}/graphql`);
 });
