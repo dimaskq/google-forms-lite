@@ -120,13 +120,6 @@ Usage in code (`formsApi.ts`):
 const baseUrl = import.meta.env.VITE_API_URL;
 ```
 
-### `.env.example`
-
-For clarity and to help other developers:
-
-- Create `server/.env.example` and `client/.env.example` with the same keys but without secrets.
-- Add real `.env` files to `.gitignore`.
-
 ---
 
 ## Getting Started
