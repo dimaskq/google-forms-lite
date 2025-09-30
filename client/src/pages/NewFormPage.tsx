@@ -43,6 +43,33 @@ export default function NewFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!title.trim()) {
+      alert("The form must have a title");
+      return;
+    }
+
+    for (let q of questions) {
+      if (!q.text.trim()) {
+        alert("All questions must have text");
+        return;
+      }
+
+      if (q.type === "RADIO" || q.type === "CHECKBOX") {
+        if (
+          !q.options ||
+          q.options.length === 0 ||
+          q.options.every((opt: string) => !opt.trim())
+        ) {
+          alert(
+            `Question "${
+              q.text || "(without a name)"
+            }" must have at least one meaningful answer`
+          );
+          return;
+        }
+      }
+    }
+
     try {
       await createForm({
         title,
